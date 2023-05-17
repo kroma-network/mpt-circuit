@@ -34,7 +34,7 @@ async function main() {
     console.log('blk', blk.stateRoot)
 
     let {result: r} = await hre.web3.currentProvider.mySend({
-        method:"scroll_getBlockTraceByNumberOrHash",
+        method:"kroma_getBlockTraceByNumberOrHash",
         params: [blk.hash],
         jsonrpc: "2.0",
         id: new Date().getTime(),
@@ -62,7 +62,7 @@ async function main() {
         storage: execResult.storage,
         codeHash: execResult.codeHash,
     }
-    
+
     for (tr of digest.storage?.smtTrace || []) {
         //console.log(tr)
         console.log(JSON.stringify(tr))
@@ -86,4 +86,3 @@ async function main() {
       console.error(error);
       process.exit(1);
     });
-  

@@ -1,6 +1,6 @@
-# Scroll's MPT Circuit
+# Kroma's MPT Circuit
 
-Integration tests: https://github.com/scroll-tech/mpt-circuit/tree/master/integration-tests
+Integration tests: https://github.com/kroma-network/mpt-circuit/tree/master/integration-tests
 
 ## License
 

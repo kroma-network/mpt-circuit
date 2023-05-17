@@ -311,7 +311,7 @@ impl EthTrieConfig {
     /// configure for lite circuit (no mpt table included, for fast testing)
     pub fn configure_base<Fp: FieldExt>(
         meta: &mut ConstraintSystem<Fp>,
-        hash_tbl: [Column<Advice>; 4],
+        hash_tbl: [Column<Advice>; 5],
     ) -> Self {
         let tables = mpt::MPTOpTables::configure_create(meta);
         let hash_tbl = mpt::HashTable::configure_assign(&hash_tbl);
@@ -397,7 +397,7 @@ impl EthTrieConfig {
 
     /// configure for lite circuit (no mpt table included, for fast testing)
     pub fn configure_lite<Fp: FieldExt>(meta: &mut ConstraintSystem<Fp>) -> Self {
-        let hash_tbl = [0; 4].map(|_| meta.advice_column());
+        let hash_tbl = [0; 5].map(|_| meta.advice_column());
         Self::configure_base(meta, hash_tbl)
     }
 
@@ -405,7 +405,7 @@ impl EthTrieConfig {
     pub fn configure_sub<Fp: FieldExt>(
         meta: &mut ConstraintSystem<Fp>,
         mpt_tbl: [Column<Advice>; 7],
-        hash_tbl: [Column<Advice>; 4],
+        hash_tbl: [Column<Advice>; 5],
         randomness: Expression<Fp>,
     ) -> Self {
         let mut lite_cfg = Self::configure_base(meta, hash_tbl);
@@ -709,7 +709,7 @@ impl<Fp: Hashable> Circuit<Fp> for HashCircuit<Fp> {
     }
 
     fn configure(meta: &mut ConstraintSystem<Fp>) -> Self::Config {
-        let hash_tbl = [0; 4].map(|_| meta.advice_column());
+        let hash_tbl = [0; 5].map(|_| meta.advice_column());
         hash::PoseidonHashConfig::configure_sub(meta, hash_tbl, hash_circuit::DEFAULT_STEP)
     }
 
@@ -719,7 +719,7 @@ impl<Fp: Hashable> Circuit<Fp> for HashCircuit<Fp> {
         mut layouter: impl Layouter<Fp>,
     ) -> Result<(), Error> {
         let chip = hash::PoseidonHashChip::<Fp, { hash_circuit::DEFAULT_STEP }>::construct(
-            config, &self.0, self.1,
+            config, &self.0, self.1, true, None,
         );
         chip.load(&mut layouter)
     }
@@ -856,7 +856,7 @@ impl<Fp: Hashable, const LITE: bool> Circuit<Fp> for EthTrieCircuit<Fp, LITE> {
             EthTrieConfig::configure_lite(meta)
         } else {
             let base = [0; 7].map(|_| meta.advice_column());
-            let hash_tbl = [0; 4].map(|_| meta.advice_column());
+            let hash_tbl = [0; 5].map(|_| meta.advice_column());
             let randomness = Expression::Constant(Fp::from(get_rand_base()));
             EthTrieConfig::configure_sub(meta, base, hash_tbl, randomness)
         }
