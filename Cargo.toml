@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hash-circuit = { package = "poseidon-circuit", git = "https://github.com/kroma-network/poseidon-circuit.git", rev = "c93a542" }
-halo2_proofs = { git = "https://github.com/kroma-network/halo2.git", rev = "4f71fab" }
+hash-circuit = { package = "poseidon-circuit", git = "https://github.com/kroma-network/poseidon-circuit.git", rev = "3d46015" }
+halo2_proofs = { git = "https://github.com/kroma-network/halo2.git", branch = "halo2-with-tachyon" }
 rand = "0.8"
 lazy_static = "1.4.0"
 serde = { version = "1.0", features = ["derive"] }
