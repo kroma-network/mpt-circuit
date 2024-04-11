@@ -6,14 +6,13 @@ use halo2_proofs::{
     plonk::{keygen_vk, Circuit, ConstraintSystem},
     poly::kzg::commitment::ParamsKZG,
 };
-use mpt_zktrie::state::{builder::HASH_SCHEME_DONE, witness::WitnessGenerator, ZktrieState};
+use mpt_zktrie::state::{witness::WitnessGenerator, ZktrieState};
 use rand_chacha::rand_core::SeedableRng;
 
 const N_ROWS: usize = 8 * 256 + 1;
 const STORAGE_ADDRESS: Address = Address::repeat_byte(1);
 
 fn initial_generator() -> WitnessGenerator {
-    assert!(*HASH_SCHEME_DONE);
     let mut generator = WitnessGenerator::from(&ZktrieState::default());
     for i in 1..10 {
         generator.handle_new_state(
@@ -63,7 +62,7 @@ fn mock_prove(witness: Vec<(MPTProofType, SMTTrace)>) {
 fn degree() {
     let mut meta = ConstraintSystem::<Fr>::default();
     TestCircuit::configure(&mut meta);
-    assert_eq!(meta.degree(), 9);
+    assert_eq!(meta.degree(), 8);
 }
 
 #[test]
@@ -184,7 +183,6 @@ fn empty_account_proofs_for_zero_value_updates() {
 
 #[test]
 fn empty_mpt_empty_account_proofs_for_zero_value_updates() {
-    assert!(*HASH_SCHEME_DONE);
     let mut generator = WitnessGenerator::from(&ZktrieState::default());
     let trace = generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::AccountDoesNotExist,
@@ -933,7 +931,6 @@ fn empty_storage_type_2() {
 
 #[test]
 fn empty_mpt() {
-    assert!(*HASH_SCHEME_DONE);
     let mut generator = WitnessGenerator::from(&ZktrieState::default());
     let trace = generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::BalanceChanged,
@@ -950,7 +947,6 @@ fn empty_mpt() {
 
 #[test]
 fn empty_mpt_empty_account() {
-    assert!(*HASH_SCHEME_DONE);
     let mut generator = WitnessGenerator::from(&ZktrieState::default());
     let trace = generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::AccountDoesNotExist,
@@ -967,7 +963,6 @@ fn empty_mpt_empty_account() {
 
 #[test]
 fn singleton_mpt() {
-    assert!(*HASH_SCHEME_DONE);
     let mut generator = WitnessGenerator::from(&ZktrieState::default());
     generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::BalanceChanged,
@@ -992,7 +987,6 @@ fn singleton_mpt() {
 
 #[test]
 fn singleton_mpt_empty_account() {
-    assert!(*HASH_SCHEME_DONE);
     let mut generator = WitnessGenerator::from(&ZktrieState::default());
     generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::BalanceChanged,
@@ -1029,7 +1023,6 @@ fn create_name_registrator_per_txs_not_enough_gas_d0_g0_v0() {
 
 #[test]
 fn test_n_rows_required() {
-    assert!(*HASH_SCHEME_DONE);
     let mut generator = WitnessGenerator::from(&ZktrieState::default());
     generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::BalanceChanged,
