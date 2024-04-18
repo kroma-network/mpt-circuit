@@ -99,7 +99,7 @@ fn all_padding() {
 }
 
 #[test]
-fn empty_account_type_1() {
+fn empty_account_type_1() {          
     let mut generator = initial_generator();
     let trace = generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::AccountDoesNotExist,
@@ -170,7 +170,6 @@ fn empty_account_proofs_for_zero_value_updates() {
         for proof_type in [
             MPTProofType::BalanceChanged,
             MPTProofType::NonceChanged,
-            MPTProofType::CodeSizeExists,
             MPTProofType::CodeHashExists,
             // poseidon code hash is not in this list because the state (rw) circuit will
             // translate mpt lookups where the old and new poseidon code hash = 0 in account
@@ -216,7 +215,6 @@ fn empty_mpt_empty_account_proofs_for_zero_value_updates() {
     for proof_type in [
         MPTProofType::BalanceChanged,
         MPTProofType::NonceChanged,
-        MPTProofType::CodeSizeExists,
         MPTProofType::CodeHashExists,
     ] {
         mock_prove(vec![(proof_type, type_1_trace.clone())]);
@@ -435,37 +433,7 @@ fn empty_account_type_2_nonce_update() {
 }
 
 #[test]
-fn existing_account_code_size_update() {
-    let mut generator = initial_generator();
-    let trace = generator.handle_new_state(
-        mpt_zktrie::mpt_circuits::MPTProofType::CodeSizeExists,
-        Address::repeat_byte(4),
-        U256::from(2342114),
-        U256::zero(),
-        None,
-    );
-
-    assert!(
-        trace.account_update[0].is_some(),
-        "old account does not exist"
-    );
-
-    let json = serde_json::to_string_pretty(&trace).unwrap();
-    assert_eq!(
-        format!("{}\n", json),
-        include_str!("traces/existing_account_code_size_update.json"),
-        "{}",
-        json
-    );
-    let trace: SMTTrace = serde_json::from_str(&json).unwrap();
-    let proof = Proof::from((MPTProofType::CodeSizeExists, trace.clone()));
-    proof.check();
-
-    mock_prove(vec![(MPTProofType::CodeSizeExists, trace)]);
-}
-
-#[test]
-fn existing_account_keccak_codehash_update() {
+fn existing_account_codehash_update() {
     let mut generator = initial_generator();
     let trace = generator.handle_new_state(
         mpt_zktrie::mpt_circuits::MPTProofType::CodeHashExists,
@@ -487,31 +455,6 @@ fn existing_account_keccak_codehash_update() {
     proof.check();
 
     mock_prove(vec![(MPTProofType::CodeHashExists, trace)]);
-}
-
-#[test]
-fn existing_account_poseidon_codehash_update() {
-    let mut generator = initial_generator();
-    let trace = generator.handle_new_state(
-        mpt_zktrie::mpt_circuits::MPTProofType::PoseidonCodeHashExists,
-        Address::repeat_byte(4),
-        U256([u64::MAX, u64::MAX, u64::MAX, 2342]),
-        U256::zero(),
-        None,
-    );
-
-    let json = serde_json::to_string_pretty(&trace).unwrap();
-    assert_eq!(
-        format!("{}\n", json),
-        include_str!("traces/existing_account_poseidon_codehash_update.json"),
-        "{}",
-        json
-    );
-    let trace: SMTTrace = serde_json::from_str(&json).unwrap();
-    let proof = Proof::from((MPTProofType::PoseidonCodeHashExists, trace.clone()));
-    proof.check();
-
-    mock_prove(vec![(MPTProofType::PoseidonCodeHashExists, trace)]);
 }
 
 #[test]

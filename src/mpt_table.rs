@@ -13,10 +13,6 @@ pub enum MPTProofType {
     BalanceChanged,
     /// keccak codehash updated
     CodeHashExists,
-    /// poseidon codehash updated
-    PoseidonCodeHashExists,
-    /// code size updated
-    CodeSizeExists,
     /// account is empty
     AccountDoesNotExist,
     /// storage
@@ -38,9 +34,7 @@ impl From<ClaimKind> for MPTProofType {
         match kind {
             ClaimKind::Nonce { .. } => MPTProofType::NonceChanged,
             ClaimKind::Balance { .. } => MPTProofType::BalanceChanged,
-            ClaimKind::PoseidonCodeHash { .. } => MPTProofType::PoseidonCodeHashExists,
             ClaimKind::CodeHash { .. } => MPTProofType::CodeHashExists,
-            ClaimKind::CodeSize { .. } => MPTProofType::CodeSizeExists,
             ClaimKind::Storage { .. } => MPTProofType::StorageChanged,
             ClaimKind::IsEmpty(None) => MPTProofType::AccountDoesNotExist,
             ClaimKind::IsEmpty(Some(_)) => MPTProofType::StorageDoesNotExist,

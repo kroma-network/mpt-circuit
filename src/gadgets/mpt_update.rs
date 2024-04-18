@@ -304,12 +304,6 @@ impl MptUpdateConfig {
                 match proof_type {
                     MPTProofType::NonceChanged => configure_nonce(cb, &config, bytes, poseidon),
                     MPTProofType::BalanceChanged => configure_balance(cb, &config, poseidon, rlc),
-                    MPTProofType::CodeSizeExists => {
-                        configure_code_size(cb, &config, bytes, poseidon)
-                    }
-                    MPTProofType::PoseidonCodeHashExists => {
-                        configure_poseidon_code_hash(cb, &config)
-                    }
                     MPTProofType::AccountDoesNotExist => {
                         configure_empty_account(cb, &config, poseidon)
                     }
@@ -510,11 +504,10 @@ impl MptUpdateConfig {
         };
 
         let directions = match proof_type {
-            MPTProofType::NonceChanged | MPTProofType::CodeSizeExists => {
+            MPTProofType::NonceChanged => {
                 vec![true, false, false, false]
             }
             MPTProofType::BalanceChanged => vec![true, false, false, true],
-            MPTProofType::PoseidonCodeHashExists => vec![true, true],
             MPTProofType::CodeHashExists => vec![true, false, true, true],
             MPTProofType::StorageChanged | MPTProofType::StorageDoesNotExist => {
                 vec![true, false, true, false]
@@ -1483,90 +1476,6 @@ fn configure_nonce<F: FromUniformBytes<64> + Ord>(
     }
 }
 
-fn configure_code_size<F: FromUniformBytes<64> + Ord>(
-    cb: &mut ConstraintBuilder<F>,
-    config: &MptUpdateConfig,
-    bytes: &impl BytesLookup,
-    poseidon: &impl PoseidonLookup,
-) {
-    for variant in SegmentType::iter() {
-        let conditional_constraints = |cb: &mut ConstraintBuilder<F>| match variant {
-            SegmentType::Start | SegmentType::AccountTrie => {
-                cb.condition(
-                    config.segment_type.next_matches(&[SegmentType::Start]),
-                    |cb| {
-                        let [.., key_equals_other_key, hash_is_zero] = config.is_zero_gadgets;
-                        let [_, _, _, other_leaf_data_hash, ..] = config.intermediate_values;
-                        cb.assert_equal(
-                            "old hash = new hash for empty account proof",
-                            config.old_hash.current(),
-                            config.new_hash.current(),
-                        );
-                        cb.assert_equal(
-                            "old value = new value for empty account proof",
-                            config.old_value.current(),
-                            config.new_value.current(),
-                        );
-                        nonexistence_proof::configure(
-                            cb,
-                            config.old_value,
-                            config.key,
-                            config.other_key,
-                            key_equals_other_key,
-                            config.old_hash,
-                            hash_is_zero,
-                            other_leaf_data_hash,
-                            poseidon,
-                        );
-                    },
-                );
-            }
-            SegmentType::AccountLeaf0 => {
-                cb.assert_equal("direction is 1", config.direction.current(), Query::one());
-            }
-            SegmentType::AccountLeaf1 => {
-                cb.assert_zero("direction is 0", config.direction.current());
-            }
-            SegmentType::AccountLeaf2 => {
-                cb.assert_zero("direction is 0", config.direction.current());
-            }
-            SegmentType::AccountLeaf3 => {
-                cb.assert_zero("direction is 0", config.direction.current());
-
-                let old_nonce = config.old_hash.current()
-                    - config.old_value.current() * Query::Constant(F::from(1 << 32).square());
-                let new_nonce = config.new_hash.current()
-                    - config.new_value.current() * Query::Constant(F::from(1 << 32).square());
-                cb.add_lookup(
-                    "old code size is 8 bytes",
-                    [config.old_value.current(), Query::from(7)],
-                    bytes.lookup(),
-                );
-                cb.add_lookup(
-                    "new code size is 8 bytes",
-                    [config.new_value.current(), Query::from(7)],
-                    bytes.lookup(),
-                );
-                cb.assert_equal(
-                    "old nonce = new nonce for code size update",
-                    old_nonce.clone(),
-                    new_nonce,
-                );
-                cb.add_lookup(
-                    "nonce is 8 bytes",
-                    [old_nonce, Query::from(7)],
-                    bytes.lookup(),
-                );
-            }
-            _ => {}
-        };
-        cb.condition(
-            config.segment_type.current_matches(&[variant]),
-            conditional_constraints,
-        );
-    }
-}
-
 fn configure_balance<F: FromUniformBytes<64> + Ord>(
     cb: &mut ConstraintBuilder<F>,
     config: &MptUpdateConfig,
@@ -1685,37 +1594,6 @@ fn configure_balance<F: FromUniformBytes<64> + Ord>(
                             config.sibling.current(),
                         );
                     },
-                );
-            }
-            _ => {}
-        };
-        cb.condition(
-            config.segment_type.current_matches(&[variant]),
-            conditional_constraints,
-        );
-    }
-}
-
-fn configure_poseidon_code_hash<F: FromUniformBytes<64> + Ord>(
-    cb: &mut ConstraintBuilder<F>,
-    config: &MptUpdateConfig,
-) {
-    for variant in SegmentType::iter() {
-        let conditional_constraints = |cb: &mut ConstraintBuilder<F>| match variant {
-            SegmentType::AccountLeaf0 => {
-                cb.assert_equal("direction is 1", config.direction.current(), Query::one());
-            }
-            SegmentType::AccountLeaf1 => {
-                cb.assert_equal("direction is 1", config.direction.current(), Query::one());
-                cb.assert_equal(
-                    "old_hash is old poseidon code hash",
-                    config.old_value.current(),
-                    config.old_hash.current(),
-                );
-                cb.assert_equal(
-                    "new_hash is new poseidon code hash",
-                    config.new_value.current(),
-                    config.new_hash.current(),
                 );
             }
             _ => {}
@@ -2155,15 +2033,13 @@ pub fn byte_representations(proofs: &[Proof]) -> (Vec<u32>, Vec<u64>, Vec<u128>,
         u128s.push(address_high(proof.claim.address));
         u32s.push(address_low(proof.claim.address));
         match MPTProofType::from(proof.claim) {
-            MPTProofType::NonceChanged | MPTProofType::CodeSizeExists => {
+            MPTProofType::NonceChanged => {
                 u128s.push(address_high(proof.claim.address));
                 if let Some(account) = proof.old_account {
                     u64s.push(account.nonce);
-                    u64s.push(account.code_size);
                 };
                 if let Some(account) = proof.new_account {
                     u64s.push(account.nonce);
-                    u64s.push(account.code_size);
                 };
             }
             MPTProofType::BalanceChanged => {
@@ -2175,18 +2051,15 @@ pub fn byte_representations(proofs: &[Proof]) -> (Vec<u32>, Vec<u64>, Vec<u128>,
                     frs.push(account.balance);
                 };
             }
-            MPTProofType::PoseidonCodeHashExists => {
-                u128s.push(address_high(proof.claim.address));
-            }
             MPTProofType::CodeHashExists => {
                 u128s.push(address_high(proof.claim.address));
                 if let Some(account) = proof.old_account {
-                    let (hi, lo) = u256_hi_lo(&account.keccak_codehash);
+                    let (hi, lo) = u256_hi_lo(&account.codehash);
                     u128s.push(hi);
                     u128s.push(lo);
                 };
                 if let Some(account) = proof.new_account {
-                    let (hi, lo) = u256_hi_lo(&account.keccak_codehash);
+                    let (hi, lo) = u256_hi_lo(&account.codehash);
                     u128s.push(hi);
                     u128s.push(lo);
                 };

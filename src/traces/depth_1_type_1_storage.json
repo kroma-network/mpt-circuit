@@ -59,16 +59,12 @@
     {
       "nonce": 1,
       "balance": "0x0",
-      "codeHash": "0x16fc66d15010e6213d2a009f57ed8e847717ea0b83eeb37cd322e9ad1b018a3e",
-      "poseidonCodeHash": "0x0d85b09a93d5ed99a87d27dcf6d50e4459d16bb694e70f89eefcb745ea1c85e7",
-      "codeSize": 4507
+      "codeHash": "0x16fc66d15010e6213d2a009f57ed8e847717ea0b83eeb37cd322e9ad1b018a3e"
     },
     {
       "nonce": 1,
       "balance": "0x0",
-      "codeHash": "0x16fc66d15010e6213d2a009f57ed8e847717ea0b83eeb37cd322e9ad1b018a3e",
-      "poseidonCodeHash": "0x0d85b09a93d5ed99a87d27dcf6d50e4459d16bb694e70f89eefcb745ea1c85e7",
-      "codeSize": 4507
+      "codeHash": "0x16fc66d15010e6213d2a009f57ed8e847717ea0b83eeb37cd322e9ad1b018a3e"
     }
   ],
   "statePath": [

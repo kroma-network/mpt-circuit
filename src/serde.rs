@@ -303,16 +303,6 @@ pub struct AccountData {
         serialize_with = "se_uint_hex_fixed32"
     )]
     pub code_hash: BigUint,
-    /// poseidonCodeHash
-    #[serde(
-        default,
-        deserialize_with = "de_uint_hex",
-        serialize_with = "se_uint_hex_fixed32"
-    )]
-    pub poseidon_code_hash: BigUint,
-    /// codeSize
-    #[serde(default)]
-    pub code_size: u64,
 }
 
 /// struct in SMTTrace
